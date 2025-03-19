@@ -1,6 +1,19 @@
-import { useLoginMutation } from "@/redux/features/auth/authAPi";
+import {
+  useLoginMutation,
+  useRefreshTokenMutation,
+} from "@/redux/features/auth/authAPi";
+import { useAppDispatch } from "@/redux/hooks";
+import { ApiError } from "@/utility/apiError";
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link, Navigate } from "react-router";
+
+type TLoginResponseType = {
+  success: boolean;
+  message: string;
+  data: {
+    accessToken: string;
+  };
+};
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -8,9 +21,11 @@ const Login: React.FC = () => {
     password: "",
   });
   const [error, setError] = useState("");
+  const [login, { data: loginResponse, isLoading, isError }] =
+    useLoginMutation();
+  const dispatch = useAppDispatch();
 
-  const [login, { data, isLoading, isError }] = useLoginMutation();
-
+  // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prevState) => ({
@@ -24,13 +39,21 @@ const Login: React.FC = () => {
     setError("");
     try {
       // Add your registration logic here
-      login(formData);
-      console.log(data);
-      //   navigate("/login");
+      (await login(formData).unwrap()) as TLoginResponseType;
+
+      const response = loginResponse as TLoginResponseType;
+      <Navigate to="/home" replace />;
     } catch (err) {
-      setError("Registration failed");
+      const error = err as ApiError; // Type assertion
+      if (error.status === 401) {
+        setError("Invalid credentials provided");
+      } else if (error.status === 404) {
+        setError("User doesn't exist");
+      }
     }
   };
+
+  const [refreshToken, { data }] = useRefreshTokenMutation();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -38,6 +61,12 @@ const Login: React.FC = () => {
         <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome Back!</h1>
         <p className="text-gray-600 mb-6">Please sign in to continue</p>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        <button
+          onClick={() => refreshToken(undefined)}
+          className="mb-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none transition-colors"
+        >
+          Refresh Token
+        </button>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label

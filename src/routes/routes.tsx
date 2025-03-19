@@ -1,4 +1,7 @@
 import App from "@/App";
+import Navbar from "@/components/navbar/navbar";
+import ProtectedRoutes from "@/components/protectedRoutes";
+import PublicRoutes from "@/components/publicRoutes";
 import Home from "@/pages/home/home";
 import Login from "@/pages/login/login";
 import Register from "@/pages/register/register";
@@ -6,13 +9,37 @@ import { Route, Routes } from "react-router";
 
 const Routing = () => {
   return (
-    <Routes>
-      <Route index element={<App />} />
-      <Route path="home" element={<Home />} />
+    <>
+      <Navbar />
+      <Routes>
+        <Route index element={<App />} />
+        <Route
+          path="home"
+          element={
+            <ProtectedRoutes>
+              <Home />
+            </ProtectedRoutes>
+          }
+        />
 
-      <Route path="login" element={<Login />} />
-      <Route path="register" element={<Register />} />
-    </Routes>
+        <Route
+          path="login"
+          element={
+            <PublicRoutes>
+              <Login />
+            </PublicRoutes>
+          }
+        />
+        <Route
+          path="register"
+          element={
+            <PublicRoutes>
+              <Register />
+            </PublicRoutes>
+          }
+        />
+      </Routes>
+    </>
   );
 };
 
