@@ -1,4 +1,5 @@
 import { apiSlice } from "../api/apiSlice";
+import { setUser } from "./userSlice";
 
 const userAPi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -6,8 +7,15 @@ const userAPi = apiSlice.injectEndpoints({
       query: () => ({
         url: "/users/me",
         method: "GET",
-        credentials: "include",
       }),
+      async onQueryStarted(__args, { dispatch, queryFulfilled }) {
+        try {
+          const { data: userApiResponse } = await queryFulfilled;
+          dispatch(setUser(userApiResponse.data));
+        } catch (error) {
+          return Promise.reject(error);
+        }
+      },
     }),
   }),
 });

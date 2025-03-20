@@ -1,11 +1,8 @@
-import {
-  useLoginMutation,
-  useRefreshTokenMutation,
-} from "@/redux/features/auth/authAPi";
-import { useAppDispatch } from "@/redux/hooks";
+import usePersist from "@/hooks/usePersist";
+import { useLoginMutation } from "@/redux/features/auth/authAPi";
 import { ApiError } from "@/utility/apiError";
 import React, { useState } from "react";
-import { Link, Navigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 
 type TLoginResponseType = {
   success: boolean;
@@ -21,10 +18,12 @@ const Login: React.FC = () => {
     password: "",
   });
   const [error, setError] = useState("");
-  const [login, { data: loginResponse, isLoading, isError }] =
-    useLoginMutation();
-  const dispatch = useAppDispatch();
+  const [login] = useLoginMutation();
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const from = location.state?.from.pathname || "/"; // Default to home if no previous page
   // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -34,15 +33,17 @@ const Login: React.FC = () => {
     }));
   };
 
+  const [persist, setPersist] = usePersist();
+
+  const handlePersist = () => setPersist((prev: boolean) => !prev);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     try {
       // Add your registration logic here
       (await login(formData).unwrap()) as TLoginResponseType;
-
-      const response = loginResponse as TLoginResponseType;
-      <Navigate to="/home" replace />;
+      navigate(from, { replace: true }); // Redirect to where the user came from
     } catch (err) {
       const error = err as ApiError; // Type assertion
       if (error.status === 401) {
@@ -53,20 +54,13 @@ const Login: React.FC = () => {
     }
   };
 
-  const [refreshToken, { data }] = useRefreshTokenMutation();
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md">
         <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome Back!</h1>
         <p className="text-gray-600 mb-6">Please sign in to continue</p>
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        <button
-          onClick={() => refreshToken(undefined)}
-          className="mb-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none transition-colors"
-        >
-          Refresh Token
-        </button>
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label
@@ -101,6 +95,24 @@ const Login: React.FC = () => {
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
               required
             />
+          </div>
+
+          <div className="mb-4 flex items-center ">
+            <label
+              className="block text-gray-700 text-sm font-bold"
+              htmlFor="persist"
+            >
+              <input
+                type="checkbox"
+                id="persist"
+                name="persist"
+                checked={persist}
+                onChange={handlePersist}
+                className="mr-2"
+                required
+              />{" "}
+              Remember me
+            </label>
           </div>
 
           <div className="flex items-center justify-between mb-2">

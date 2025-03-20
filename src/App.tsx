@@ -1,10 +1,8 @@
-import Home from "./pages/home/home";
-
 const App = () => {
   return (
-    <>
-      <Home />
-    </>
+    <div>
+      <h2 className="text-center text-2xl font-bold">This is the main app</h2>
+    </div>
   );
 };
 

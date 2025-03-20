@@ -24,14 +24,31 @@ export const authApi = apiSlice.injectEndpoints({
       },
     }),
 
-    // A mutation that will be used to register a new user
-    refreshToken: builder.mutation({
+    logout: builder.mutation({
       query: () => ({
-        url: "/auth/refresh-token",
+        url: "/auth/logout",
         method: "POST",
       }),
+
+      async onQueryStarted(__args, { dispatch }) {
+        dispatch(setAccessToken(""));
+      },
+    }),
+
+    refreshToken: builder.mutation({
+      query: () => ({ url: "/auth/refresh-token", method: "POST" }),
+
+      async onQueryStarted(__args, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setAccessToken(data.data.accessToken));
+        } catch (error) {
+          return Promise.reject(error);
+        }
+      },
     }),
   }),
 });
 
-export const { useLoginMutation, useRefreshTokenMutation } = authApi;
+export const { useLoginMutation, useRefreshTokenMutation, useLogoutMutation } =
+  authApi;
